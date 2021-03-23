@@ -102,9 +102,9 @@ Private Sub SetHand(ByVal OpenCard As Long)
             Call DecCard(i) 'iのカードを山から1枚減らす
             If i = 1 Then
                 'Aの時は、ソフトハンドの11とみなして計算する
-                Call SetSoftHandRate(11, Rate)
+                Call SetHandRate(11, Rate, True)
             Else
-                Call SetHardHandRate(i, Rate)
+                Call SetHandRate(i, Rate, False)
             End If
             Call IncCard(i) 'iのカードを山に戻す
         Next
@@ -114,81 +114,49 @@ Private Sub SetHand(ByVal OpenCard As Long)
     Call DecCard(OpenCard) 'オープンカードを山から1枚減らす
     If OpenCard = 1 Then
         'Aの時は、ソフトハンドの11とみなして計算する
-        Call SetSoftHandRate(11, 1)
+        Call SetHandRate(11, 1, True)
     Else
-        Call SetHardHandRate(OpenCard, 1)
+        Call SetHandRate(OpenCard, 1, False)
     End If
 End Sub
 
 '*****************************************************************************
-'[概要] ソフトハンドの確率を設定する(多重ループを再帰関数で実現する)
-'[引数] Hand:現在の手，HandRate:現在の手の出現確率
+'[概要] 各ハンドの確率を設定する(多重ループを再帰関数で実現する)
+'[引数] Hand:現在の手,HandRate:現在の手の出現確率,IsSoftHand:ソフトハンドの時True
 '*****************************************************************************
-Private Sub SetSoftHandRate(ByVal Hand As Long, ByVal HandRate As Double)
+Private Sub SetHandRate(ByVal Hand As Long, ByVal HandRate As Double, ByVal IsSoftHand As Boolean)
     Dim i As Long
     Dim Rate As Double
     Dim NextHand As Long
-    
-    For i = 1 To 10
-        '山に対象のカードが残っているか判定
-        If Cards(i) > 0 Then
-            NextHand = Hand + i
-            Rate = HandRate * Cards(i) / CardsCount
-            If NextHand > 21 Then
-                'ソフトハンドがバーストした時はハードハンドで再計算する
-                NextHand = NextHand - 10
-                HardHandRate(NextHand) = HardHandRate(NextHand) + Rate
-                If NextHand < 17 Then
-                    '17未満なら次のカードを引く
-                    Call DecCard(i) 'iのカードを山から1枚減らす
-                    Call SetHardHandRate(NextHand, Rate)
-                    Call IncCard(i) 'iのカードを山に戻す
-                End If
-            Else
-                SoftHandRate(NextHand) = SoftHandRate(NextHand) + Rate
-                If NextHand < 17 Then
-                    '17未満なら次のカードを引く
-                    Call DecCard(i) 'iのカードを山から1枚減らす
-                    Call SetSoftHandRate(NextHand, Rate)
-                    Call IncCard(i) 'iのカードを山に戻す
-                End If
-            End If
-        End If
-    Next
-End Sub
+    Dim NextIsSoftHand As Boolean
 
-'*****************************************************************************
-'[概要] ハードハンドの確率を設定する(多重ループを再帰関数で実現する)
-'[引数] Hand:現在の手，HandRate:現在の手の出現確率
-'*****************************************************************************
-Private Sub SetHardHandRate(ByVal Hand As Long, ByVal HandRate As Double)
-    Dim i As Long
-    Dim Rate As Double
-    Dim NextHand As Long
-    
     For i = 1 To 10
         '山に対象のカードが残っているか判定
         If Cards(i) > 0 Then
+            NextIsSoftHand = IsSoftHand
             NextHand = Hand + i
+            If i = 1 And NextIsSoftHand = False Then
+                'ハードハンドをソフトハンドに変更
+                NextIsSoftHand = True
+                NextHand = NextHand + 10
+            End If
+            If NextHand > 21 And NextIsSoftHand = True Then
+                'ソフトハンドをハードハンドに変更
+                NextIsSoftHand = False
+                NextHand = NextHand - 10
+            End If
+            
             Rate = HandRate * Cards(i) / CardsCount
-            If i = 1 And Hand <= 10 Then
-                'ソフトハンド(Aを11)として計算する
-                NextHand = Hand + 11
+            If NextIsSoftHand Then
                 SoftHandRate(NextHand) = SoftHandRate(NextHand) + Rate
-                If NextHand < 17 Then
-                    '17未満なら次のカードを引く
-                    Call DecCard(i) 'iのカードを山から1枚減らす
-                    Call SetSoftHandRate(NextHand, Rate)
-                    Call IncCard(i) 'iのカードを山に戻す
-                End If
             Else
                 HardHandRate(NextHand) = HardHandRate(NextHand) + Rate
-                If NextHand < 17 Then
-                    '17未満なら次のカードを引く
-                    Call DecCard(i) 'iのカードを山から1枚減らす
-                    Call SetHardHandRate(NextHand, Rate)
-                    Call IncCard(i) 'iのカードを山に戻す
-                End If
+            End If
+            If NextHand < 17 Then
+                '17未満なら次のカードを引く
+                Call DecCard(i) 'iのカードを山から1枚減らす
+                Call SetHandRate(NextHand, Rate, NextIsSoftHand)
+                Call IncCard(i) 'iのカードを山に戻す
             End If
         End If
     Next
@@ -213,4 +181,3 @@ Private Sub IncCard(ByVal Card As Long)
     Cards(Card) = Cards(Card) + 1
     CardsCount = CardsCount + 1
 End Sub
-
