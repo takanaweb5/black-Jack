@@ -4,45 +4,42 @@ Option Explicit
 Private Cards() As Long '山のカードの配列
 Private CardPoint As Long '山の何枚目のカードか
 Private HardHandRate(1 To 26) As Double 'ハードハンドの確率の計算結果
-Const LOOP回数 = 10000
 
 '*****************************************************************************
 '[概要] 親のハンドの確率をシュミレーションし配列数式で返す
-'[引数] OpenCard:親の初手(0の時は、初手の出現確率も含めて計算する)
+'[引数] LopCnt:ループ回数
 '       Decks:トランプの組数
 '[戻値] 配列数式
 '*****************************************************************************
-Public Function SimulateHandRate(ByVal OpenCard As Long, ByVal Decks As Double) As Variant
-    Dim Hands(17 To 22) As Long
-    Call SetHands(OpenCard, Decks, Hands())
-    
-    Dim Result(17 To 22)
-    Dim i As Long
-    For i = 17 To 22
-        Result(i) = Hands(i) / LOOP回数
-    Next
+Public Function SimulateHandRate(ByVal LopCnt As Long, ByVal Decks As Double) As Variant
+    Dim Result(1 To 10, 17 To 22) As Long
+    Call SetHands(LopCnt, Decks, Result())
     SimulateHandRate = Result
 End Function
 
 '*****************************************************************************
 '[概要] LOOP回数試行した各ハンドの出現回数を設定する
-'[引数] OpenCard:初手(0の時は、初手を決めずに試行する)
+'[引数] LopCnt:ループ回数
 '       Decks:トランプの組数
 '       Result:各ハンドの出現回数
 '*****************************************************************************
-Private Sub SetHands(ByVal OpenCard As Long, ByVal Decks As Double, ByRef Result() As Long)
+Private Sub SetHands(ByVal LopCnt As Long, ByVal Decks As Double, ByRef Result() As Long)
     Call Initilize(Decks)
-    Call Shuffle(OpenCard)
+    Call Shuffle
     
     Dim i As Long
     Dim Hand As Long
-    For i = 1 To LOOP回数
-        '毎回シャッフルすると処理が重いためカードの山を半分まで使用するとシャッフルする
-        If CardPoint >= UBound(Cards) * 0.5 Then
-            Call Shuffle(OpenCard)
-        End If
+    For i = 1 To LopCnt
+        '毎回シャッフルすると処理が重いためカードの山を4分の3まで使用するとシャッフルする
+        '
+'        If CardPoint >= UBound(Cards) * 0.75 Then
+            Call Shuffle
+'        End If
+        
+        Dim OpenCard As Long
+        OpenCard = Hit()
         Hand = Deal(OpenCard)
-        Result(Hand) = Result(Hand) + 1
+        Result(OpenCard, Hand) = Result(OpenCard, Hand) + 1
     Next
 End Sub
 
@@ -65,29 +62,15 @@ End Sub
 
 '*****************************************************************************
 '[概要] カードをシャッフルする
-'[引数] OpenCard:1枚目のカード(0の時は、1枚目も含めてシャッフル)
+'[引数] なし
 '*****************************************************************************
-Private Sub Shuffle(ByVal FirstCard As Long)
+Private Sub Shuffle()
+    CardPoint = 0
     Dim i As Long
-    If FirstCard = 0 Then
-        CardPoint = 1
-    Else
-        CardPoint = 2
-        '1枚目のカードをOpenCardに固定する
-        For i = 1 To UBound(Cards)
-            If Cards(i) = FirstCard Then
-                '1枚目とi枚目を交換
-                Cards(i) = Cards(1)
-                Cards(1) = FirstCard
-                Exit For
-            End If
-        Next
-    End If
-    
-    Dim Swap As Long
     Dim j As Long
-    For i = CardPoint To UBound(Cards)
-        j = WorksheetFunction.RandBetween(CardPoint, UBound(Cards))
+    Dim Swap As Long
+    For i = 1 To UBound(Cards)
+        j = WorksheetFunction.RandBetween(1, UBound(Cards))
         Swap = Cards(i)
         Cards(i) = Cards(j)
         Cards(j) = Swap
@@ -138,13 +121,9 @@ End Function
 '[戻値] 引いたカード
 '*****************************************************************************
 Private Function Hit() As Long
+    CardPoint = CardPoint + 1
     Hit = Cards(CardPoint)
     If Hit > 10 Then
         Hit = 10
     End If
-    CardPoint = CardPoint + 1
 End Function
-
-
-
-
