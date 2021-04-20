@@ -12,9 +12,11 @@ Private HardHandRate(1 To 26) As Double 'ハードハンドの確率の計算結果
 '[戻値] 配列数式
 '*****************************************************************************
 Public Function SimulateHandRate(ByVal LopCnt As Long, ByVal Decks As Double) As Variant
+    Debug.Print Now
     Dim Result(1 To 10, 17 To 22) As Long
     Call SetHands(LopCnt, Decks, Result())
     SimulateHandRate = Result
+    Debug.Print Now
 End Function
 
 '*****************************************************************************
@@ -26,20 +28,28 @@ End Function
 Private Sub SetHands(ByVal LopCnt As Long, ByVal Decks As Double, ByRef Result() As Long)
     Call Initilize(Decks)
     Call Shuffle
-    
+        
+    Dim SaveCardPoint As Long
     Dim i As Long
     Dim Hand As Long
+    
     For i = 1 To LopCnt
-        '毎回シャッフルすると処理が重いためカードの山を4分の3まで使用するとシャッフルする
-        '
-'        If CardPoint >= UBound(Cards) * 0.75 Then
+        'カードの山を4分の3まで使用するとシャッフルする
+        If CardPoint >= UBound(Cards) * 0.75 Then
             Call Shuffle
-'        End If
+        End If
+        SaveCardPoint = CardPoint
         
         Dim OpenCard As Long
         OpenCard = Hit()
         Hand = Deal(OpenCard)
         Result(OpenCard, Hand) = Result(OpenCard, Hand) + 1
+        
+        '10や9は次のカードをHitする確率が低く、2や3は高くなるので
+        'カードの出現確率の偏りを是正させる
+        If SaveCardPoint + 5 > CardPoint Then
+            CardPoint = SaveCardPoint + 5
+        End If
     Next
 End Sub
 
@@ -70,7 +80,7 @@ Private Sub Shuffle()
     Dim j As Long
     Dim Swap As Long
     For i = 1 To UBound(Cards)
-        j = WorksheetFunction.RandBetween(1, UBound(Cards))
+        j = Int(UBound(Cards) * Rnd() + 1)
         Swap = Cards(i)
         Cards(i) = Cards(j)
         Cards(j) = Swap
