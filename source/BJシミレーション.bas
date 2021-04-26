@@ -3,7 +3,6 @@ Option Explicit
 
 Private Cards() As Long '山のカードの配列
 Private CardPoint As Long '山の何枚目のカードか
-Private HardHandRate(1 To 26) As Double 'ハードハンドの確率の計算結果
 
 '*****************************************************************************
 '[概要] 親のハンドの確率をシュミレーションし配列数式で返す
@@ -79,8 +78,8 @@ Private Sub Shuffle()
     Dim i As Long
     Dim j As Long
     Dim Swap As Long
-    For i = 1 To UBound(Cards)
-        j = Int(UBound(Cards) * Rnd() + 1)
+    For i = 1 To UBound(Cards) - 1
+        j = RandBetween(i, UBound(Cards))
         Swap = Cards(i)
         Cards(i) = Cards(j)
         Cards(j) = Swap
@@ -88,8 +87,17 @@ Private Sub Shuffle()
 End Sub
 
 '*****************************************************************************
+'[概要] 最小値と最大値の間の乱数を発生させる
+'[引数] 最小値と最大値
+'[戻値] 乱数
+'*****************************************************************************
+Private Function RandBetween(ByVal min As Long, ByVal max As Long) As Long
+    RandBetween = Int(Rnd() * (max - min + 1)) + min
+End Function
+
+'*****************************************************************************
 '[概要] 17以上になるまでカードを引く
-'[引数] OpenCard:オープンカード(0の時は、初手を決めずにカードを引く)
+'[引数] OpenCard:オープンカード
 '[戻値] 17～22のいずれか（22はバースト）
 '*****************************************************************************
 Private Function Deal(ByVal OpenCard As Long) As Long
