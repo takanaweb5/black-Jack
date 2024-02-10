@@ -18,9 +18,9 @@ Public Function OpenRate(ByVal x As Long)
 End Function
 
 '*****************************************************************************
-'[概要] オープンカードの確率
+'[概要] xのカードを引く確率
 '[引数] x:数値
-'[戻値] OpenCardを引く確率
+'[戻値] xのカードを引く確率
 '*****************************************************************************
 Public Function HitRate(ByVal x As Long)
     Dim Result
@@ -78,8 +78,8 @@ Public Function HRate(ByVal x As Long, Optional lngOpen = 0)
         
         'ソフトハンドからの確率
         old = x - i + 10
-        If x >= 12 Then
-            If 12 <= old And old <= 16 Then
+        If 12 <= old And old <= 16 Then
+            If old + i > 21 Then
                 Result = Result + SRate(old) * HitRate(i)
             End If
         End If
@@ -110,7 +110,7 @@ Public Function SRate(ByVal x As Long, Optional lngOpen = 0)
         'オープンカードからの確率
         old = x - i - 10
         If i = 1 Then '今回がA
-            If old <= 10 Then
+            If 1 <= old And old <= 10 Then
                 Result = Result + OpenRate(old) * HitRate(i)
             End If
         ElseIf old = 1 Then '前回がA
