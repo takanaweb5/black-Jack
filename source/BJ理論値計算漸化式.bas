@@ -67,15 +67,11 @@ Public Function HRate(ByVal x As Long, Optional lngOpen = 0)
     'ハードハンドからの確率
     For i = 4 To 16
         hit = x - i
-        If hit = 1 Then
-            If i + 11 > 21 Then
-                'Aを1としてカウント
-                Result = Result + HRate(i) * HitRate(1)
-            End If
-        Else
-            If 2 <= hit And hit <= 10 Then
-                Result = Result + HRate(i) * HitRate(hit)
-            End If
+        If 2 <= hit And hit <= 10 Then
+            Result = Result + HRate(i) * HitRate(hit)
+        ElseIf hit = 1 And i + 11 > 21 Then
+            'Aを1としてカウント
+            Result = Result + HRate(i) * HitRate(1)
         End If
     Next
         
