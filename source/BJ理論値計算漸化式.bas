@@ -109,17 +109,16 @@ Public Function SRate(ByVal x As Long, Optional lngOpen = 0)
     Dim hit As Long
     
     'オープンカードからの確率
-    For i = 1 To 10
-        If i = 1 Then
-            hit = x - 11
-            If 1 <= hit And hit <= 10 Then
-                Result = Result + OpenRate(i) * HitRate(hit)
-            End If
-        Else
-            hit = x - i
-            If hit = 11 Then
-                Result = Result + OpenRate(i) * HitRate(1)
-            End If
+    hit = x - 11
+    If 1 <= hit And hit <= 10 Then
+        '1枚目がA
+        Result = Result + OpenRate(1) * HitRate(hit)
+    End If
+    For i = 2 To 10
+        hit = x - i
+        If hit = 11 Then
+            '今回がA
+            Result = Result + OpenRate(i) * HitRate(1)
         End If
     Next
     
